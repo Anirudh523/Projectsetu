@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-setu",
+    "dev": "setu-dev-7d593"
+  }
+}

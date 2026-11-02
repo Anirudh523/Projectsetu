@@ -1,0 +1,12 @@
+node_modules/
+functions/lib/
+dist/
+.emulator-data/
+*.log
+firebase-debug*.log
+firestore-debug.log
+ui-debug.log
+.env
+.env.*
+service-account*.json
+.DS_Store

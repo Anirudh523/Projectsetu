@@ -1,0 +1,17 @@
+{
+  "name": "setu",
+  "private": true,
+  "workspaces": ["shared", "functions", "scripts"],
+  "scripts": {
+    "build": "npm run build -w functions",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "emulators": "npm run build && firebase emulators:start --project demo-setu --import=./.emulator-data --export-on-exit",
+    "seed": "npm run seed -w scripts",
+    "deploy:dev": "firebase deploy --only hosting,firestore --project dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "firebase-tools": "^15.34.2",
+    "typescript": "^7.0.2"
+  }
+}
