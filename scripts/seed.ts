@@ -28,7 +28,13 @@ for (const p of people) {
   batch.set(db.collection(COL.users).doc(p.uid),
     { displayName: p.name, role: p.role, status: "approved", pairId: null, createdAt: now });
   batch.set(db.collection(COL.identities).doc(p.uid),
-    { legalName: p.name, email: p.email, consent: p.consent ?? false });
+    {
+      legalName: p.name,
+      school: p.role === "student" ? "Example School" : null,
+      guardianName: null,
+      guardianContact: null,
+      consent: p.consent ?? false,
+    });
 }
 batch.set(db.collection(COL.pairs).doc("pair1"), {
   studentUid: "student1", palUid: "pal1", members: ["student1", "pal1"],

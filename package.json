@@ -7,6 +7,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "emulators": "npm run build && firebase emulators:start --project demo-setu --import=./.emulator-data --export-on-exit",
     "seed": "npm run seed -w scripts",
+    "set-role": "npm run set-role -w scripts --",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-setu \"npm run test:rules -w scripts\"",
     "deploy:dev": "firebase deploy --only hosting,firestore --project dev"
   },
   "devDependencies": {
