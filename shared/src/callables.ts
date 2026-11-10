@@ -9,5 +9,6 @@ export interface Callables {
   reviewLetter:     { req: { letterId: string; action: "approve" | "return"; note?: string };
                       res: { ok: true } };
   reportPair:       { req: { pairId: string; reason: string }; res: { reportId: string } };
+  adminUnpausePair: { req: { pairId: string }; res: { ok: true } };
 }
 export type CallableName = keyof Callables;

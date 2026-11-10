@@ -34,7 +34,24 @@ export interface LetterDoc {    // written only by Cloud Functions
   body: string;
   status: "in_review" | "approved" | "returned";
   createdAt: Ts;
+  submittedAt: Ts;
   reviewedBy: string | null;
+  reviewedAt: Ts | null;
   returnNote: string | null;
   priority: number;
+}
+
+export interface ReportDoc {
+  pairId: string;
+  reporterUid: string;
+  reason: string;
+  status: "open";
+  createdAt: Ts;
+}
+
+export interface AuditDoc {
+  actor: string;
+  action: string;
+  target: string;
+  timestamp: Ts;
 }

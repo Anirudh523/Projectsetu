@@ -9,6 +9,7 @@
     "seed": "npm run seed -w scripts",
     "set-role": "npm run set-role -w scripts --",
     "test:rules": "firebase emulators:exec --only firestore --project demo-setu \"npm run test:rules -w scripts\"",
+    "test:functions": "npm run build && firebase emulators:exec --only auth,firestore,functions --project demo-setu \"npm run test:functions -w scripts\"",
     "deploy:dev": "firebase deploy --only hosting,firestore --project dev"
   },
   "devDependencies": {
