@@ -4,9 +4,15 @@ function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // need to connect to firebase auth in backend; mock credentials for now
   function handleLogin(e) {
-    e.preventDefault();
-    console.log("Login:", email);
+  e.preventDefault();
+
+  if (email === "student@test.com" && password === "password123") {
+    alert("Login successful!");
+  } else {
+    alert("Invalid credentials");
+  }
   }
 
   return (
