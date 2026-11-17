@@ -88,9 +88,16 @@ async function invoke<T>(
 async function expectCallableFailure(
   action: () => Promise<unknown>,
   code: string,
+  reason?: string,
 ): Promise<void> {
   await assert.rejects(action, (error: unknown) => {
     assert.equal((error as { code?: string }).code, `functions/${code}`);
+    if (reason) {
+      assert.equal(
+        ((error as { details?: { reason?: string } }).details)?.reason,
+        reason,
+      );
+    }
     return true;
   });
 }
@@ -160,6 +167,7 @@ test("callables run against the Firebase emulators", async () => {
   await expectCallableFailure(
     () => invoke(admin, "adminCreatePair", { studentUid: noConsentStudent.uid, palUid: pal.uid }),
     "failed-precondition",
+    "CONSENT_MISSING",
   );
   logStep("adminCreatePair rejects a student without consent");
 
@@ -178,6 +186,7 @@ test("callables run against the Firebase emulators", async () => {
   await expectCallableFailure(
     () => invoke(admin, "adminCreatePair", { studentUid: student.uid, palUid: secondPal.uid }),
     "failed-precondition",
+    "ALREADY_PAIRED",
   );
   logStep("adminCreatePair rejects an already-paired member");
 
@@ -189,10 +198,12 @@ test("callables run against the Firebase emulators", async () => {
   await expectCallableFailure(
     () => invoke(admin, "reviewLetter", { letterId, action: "approve" }),
     "permission-denied",
+    "NOT_AUTHORIZED",
   );
   await expectCallableFailure(
     () => invoke(officer, "reviewLetter", { letterId, action: "return" }),
     "invalid-argument",
+    "NOTE_REQUIRED",
   );
   logStep("submitLetter works; only an officer can review and returns require a note");
 

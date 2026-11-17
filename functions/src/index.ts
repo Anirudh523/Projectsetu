@@ -55,6 +55,7 @@ async function assignRole(uid: string, role: Role, expectedStatus: "pending" | "
       throw new HttpsError(
         "internal",
         "The role update failed and the previous custom claims could not be restored.",
+        { reason: "INTERNAL_ERROR" },
       );
     }
     throw error;
