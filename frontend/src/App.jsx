@@ -1,4 +1,6 @@
 import { useState } from "react";
+import SecurityLoginPage from "./pages/security/SecurityLoginPage.jsx";
+import SecurityRegisterPage from "./pages/security/SecurityRegisterPage.jsx";
 import Mailbox from "./pages/user/Mailbox.jsx";
 import UserLoginPage from "./pages/user/UserLoginPage.jsx";
 import UserRegisterPage from "./pages/user/UserRegisterPage.jsx";
@@ -30,9 +32,27 @@ function App() {
   }
 
   if (!loggedIn) {
-    return page === "register"
-      ? <UserRegisterPage onSignIn={() => setPage("login")} />
-      : <UserLoginPage onLogin={handleLogin} onRegister={() => setPage("register")} />;
+    switch (page) {
+      case "register":
+        return <UserRegisterPage onSignIn={() => setPage("login")} />;
+      case "security-login":
+        return (
+          <SecurityLoginPage
+            onRegister={() => setPage("security-register")}
+            onUserSignIn={() => setPage("login")}
+          />
+        );
+      case "security-register":
+        return <SecurityRegisterPage onSignIn={() => setPage("security-login")} />;
+      default:
+        return (
+          <UserLoginPage
+            onLogin={handleLogin}
+            onRegister={() => setPage("register")}
+            onSecuritySignIn={() => setPage("security-login")}
+          />
+        );
+    }
   }
 
   return (

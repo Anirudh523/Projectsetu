@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function UserLoginPage({ onLogin, onRegister }) {
+export default function UserLoginPage({ onLogin, onRegister, onSecuritySignIn }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -48,6 +48,9 @@ export default function UserLoginPage({ onLogin, onRegister }) {
         </p>
         <button type="button" onClick={onRegister} className="text-blue-700 underline mt-4">
           Register as a pen pal
+        </button>
+        <button type="button" onClick={onSecuritySignIn} className="block text-blue-700 underline mt-2">
+          Safety Officer Sign In
         </button>
       </form>
     </main>
