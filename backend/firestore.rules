@@ -19,6 +19,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
+    function isOfficer() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved"
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "officer";
+    }
+
     function isPairedWith(uid) {
       let userPath = /databases/$(database)/documents/users/$(uid);
       return signedIn()
@@ -50,6 +57,7 @@ service cloud.firestore {
     }
 
     match /letters/{letterId} {
+      allow read: if isOfficer() && resource.data.status == "in_review";
       allow read: if resource.data.pairId is string
         && isActivePairMember(resource.data.pairId)
         && (resource.data.status == "approved" || resource.data.authorUid == request.auth.uid);

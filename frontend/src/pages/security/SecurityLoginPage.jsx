@@ -1,51 +1,111 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuthService } from '../../lib/firebase';
 
-export default function SecurityLoginPage({ onRegister, onUserSignIn }) {
-  const [result, setResult] = useState(null);
+export default function SecurityLoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  function handleLogin(event) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const matchesDemo = form.get("email") === "officer@test.com"
-      && form.get("password") === "demo-officer";
-    setResult(matchesDemo ? "success" : "error");
+  async function handleLogin(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const auth = getAuthService();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Verify user has officer or admin role
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+      const role = idTokenResult.claims.role;
+
+      if (role !== 'officer' && role !== 'admin') {
+        setError('You do not have permission to access the officer dashboard.');
+        await auth.signOut();
+        return;
+      }
+
+      navigate(role === 'officer' ? '/officer/queue' : '/welcome');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to sign in';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <main className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
-      <section className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
+      >
         <h1 className="text-3xl font-bold text-blue-700 mb-2">Safety Officer Sign In</h1>
-        <p className="text-gray-600 mb-6">Demo only. Use the test credentials below.</p>
+        <p className="text-gray-500 mb-6">Review and approve letters from your pen pals</p>
 
-        {result === "success" ? (
-          <p role="status" className="text-gray-700">
-            Demo sign-in complete. Officer tools are unavailable in this prototype.
-          </p>
-        ) : (
-          <form onSubmit={handleLogin}>
-            <label htmlFor="officer-email" className="block mb-1">Email</label>
-            <input id="officer-email" name="email" type="email" required
-              className="w-full border p-3 rounded-lg mb-3" />
-            <label htmlFor="officer-password" className="block mb-1">Password</label>
-            <input id="officer-password" name="password" type="password" required
-              className="w-full border p-3 rounded-lg mb-4" />
-            {result === "error" && (
-              <p role="alert" className="text-red-600 mb-3">Use the demo email and password shown below.</p>
-            )}
-            <button className="w-full bg-blue-600 text-white p-3 rounded-lg">Try Demo Sign In</button>
-            <p className="text-xs text-gray-600 mt-4">Demo: officer@test.com / demo-officer</p>
-          </form>
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="officer@uci.edu"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            required
+            disabled={loading}
+          />
+        </div>
+
+        {error && (
+          <div role="alert" className="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded">
+            {error}
+          </div>
         )}
 
-        <div className="flex flex-col items-start gap-2 mt-4">
-          <button type="button" onClick={onRegister} className="text-blue-700 underline">
-            Safety Officer Registration
-          </button>
-          <button type="button" onClick={onUserSignIn} className="text-blue-700 underline">
-            Back to User Sign In
-          </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? 'Signing in...' : 'Sign In'}
+        </button>
+
+        <div className="mt-6 space-y-2">
+          <p className="text-center text-sm text-gray-600">
+            <Link to="/security/register" className="text-blue-600 hover:underline font-medium">
+              Register as Safety Officer
+            </Link>
+          </p>
+          <p className="text-center text-sm text-gray-600">
+            <Link to="/login" className="text-blue-600 hover:underline font-medium">
+              Back to User Sign In
+            </Link>
+          </p>
         </div>
-      </section>
+      </form>
     </main>
   );
 }

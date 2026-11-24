@@ -7,5 +7,11 @@ await build({
   target: "node22",
   format: "cjs",
   sourcemap: true,
-  external: ["firebase-admin", "firebase-admin/*", "firebase-functions", "firebase-functions/*"],
+  external: [
+    "firebase-admin",
+    "firebase-admin/*",
+    "firebase-functions",
+    "firebase-functions/*",
+  ],
 });
+

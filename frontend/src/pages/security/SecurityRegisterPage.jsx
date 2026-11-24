@@ -1,49 +1,129 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuthService } from '../../lib/firebase';
 
-export default function SecurityRegisterPage({ onSignIn }) {
-  const [submitted, setSubmitted] = useState(false);
+export default function SecurityRegisterPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  function handleRegister(e) {
+  async function handleRegister(e) {
     e.preventDefault();
-    setSubmitted(true);
+    setError('');
+
+    if (password !== passwordConfirm) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const auth = getAuthService();
+      await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Note: Account created with no role initially; admin must approve and assign role
+      navigate('/security/login');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to register';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <main className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
-      <section className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
+      <form
+        onSubmit={handleRegister}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
+      >
         <h1 className="text-3xl font-bold text-blue-700 mb-2">Safety Officer Registration</h1>
-        <p className="text-gray-600 mb-6">Demo registration for safety officers. Use test details only.</p>
-        {submitted ? (
-          <p role="status" className="text-gray-700">
-            Demo complete. No account was created or verification email sent.
-          </p>
-        ) : (
-          <form onSubmit={handleRegister}>
-            <label htmlFor="officer-register-email" className="block mb-1">Email</label>
-            <input
-              id="officer-register-email"
-              type="email"
-              autoComplete="email"
-              className="w-full border p-3 rounded-lg mb-3"
-              required
-            />
-            <label htmlFor="officer-register-password" className="block mb-1">Password</label>
-            <input
-              id="officer-register-password"
-              type="password"
-              autoComplete="new-password"
-              className="w-full border p-3 rounded-lg mb-4"
-              required
-            />
-            <button className="w-full bg-blue-600 text-white p-3 rounded-lg">
-              Try Demo Registration
-            </button>
-          </form>
+        <p className="text-gray-500 mb-6">Create an account to review and approve letters</p>
+
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="officer@uci.edu"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="passwordConfirm" className="block text-sm font-medium text-gray-700 mb-2">
+            Confirm Password
+          </label>
+          <input
+            id="passwordConfirm"
+            type="password"
+            placeholder="••••••••"
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            required
+            disabled={loading}
+          />
+        </div>
+
+        {error && (
+          <div role="alert" className="text-red-600 text-sm mb-4 p-3 bg-red-50 rounded">
+            {error}
+          </div>
         )}
-        <button type="button" onClick={onSignIn} className="text-blue-700 underline mt-4">
-          Back to Safety Officer Sign In
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? 'Creating account...' : 'Create Account'}
         </button>
-      </section>
+
+        <p className="text-xs text-gray-500 mt-4">
+          After registration, an administrator will review your request and assign your role.
+        </p>
+
+        <div className="mt-6">
+          <p className="text-center text-sm text-gray-600">
+            <Link to="/security/login" className="text-blue-600 hover:underline font-medium">
+              Back to Safety Officer Sign In
+            </Link>
+          </p>
+        </div>
+      </form>
     </main>
   );
 }

@@ -10,7 +10,11 @@ New Firebase Auth accounts receive a `users/{uid}` profile with `status: "pendin
 
 An approved admin creates pairs with `adminCreatePair`. The student must have recorded consent, both approved accounts must be unpaired, and pair creation is audited. Students and pals submit new letters or resubmit their own returned letters through `submitLetter`; it checks the active pair, author, weekly limit, length, and contact-information rules transactionally. Clients cannot write letter documents. Pair members can read approved letters and their own letters in any status while their pair is active. Draft autosave documents use `drafts/{pairId}_{uid}` and can be read or changed only by that draft's author.
 
+The mailbox shows approved incoming letters and the user's own returned letters. Deploy the Firestore indexes in `backend/firestore.indexes.json` before using these queries against a deployed project. Callable functions and the frontend client use the `us-central1` region.
+
 Officers review letters with `reviewLetter`; returns require a note. A pair member can report their pair with `reportPair`, which records the report and pauses the pair atomically, immediately blocking member letter reads. Only an admin can reactivate a paused pair with `adminUnpausePair`. The audit log is writable only by trusted functions and readable only by approved admins.
+
+Approved safety officers can sign in at `/security/login` to review and approve pending letters in the review queue. Deploy the Firestore rules and indexes for this queue when deploying the frontend. Approval uses the callable function and creates an audit entry; the letter then appears in the recipient's mailbox.
 
 ## Bootstrap an admin
 

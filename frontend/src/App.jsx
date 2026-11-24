@@ -1,89 +1,151 @@
-import { useState } from "react";
-import SecurityLoginPage from "./pages/security/SecurityLoginPage.jsx";
-import SecurityRegisterPage from "./pages/security/SecurityRegisterPage.jsx";
-import Mailbox from "./pages/user/Mailbox.jsx";
-import UserLoginPage from "./pages/user/UserLoginPage.jsx";
-import UserRegisterPage from "./pages/user/UserRegisterPage.jsx";
-import UserWelcomePage from "./pages/user/UserWelcomePage.jsx";
-import WriteLetterPage from "./pages/user/WriteLetterPage.jsx";
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { initFirebase } from './lib/firebase';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 
-function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [page, setPage] = useState("login");
-  const [letter, setLetter] = useState("");
-  const [sent, setSent] = useState(false);
+// Pages
+import UserLoginPage from './pages/user/UserLoginPage';
+import UserRegisterPage from './pages/user/UserRegisterPage';
+import UserWelcomePage from './pages/user/UserWelcomePage';
+import Mailbox from './pages/user/Mailbox';
+import WriteLetterPage from './pages/user/WriteLetterPage';
+import SecurityLoginPage from './pages/security/SecurityLoginPage';
+import SecurityRegisterPage from './pages/security/SecurityRegisterPage';
+import OfficerQueuePage from './pages/security/OfficerQueuePage';
 
-  function handleLogin() {
-    setLoggedIn(true);
-    setPage("welcome");
+// Loading component
+function LoadingPage() {
+  return (
+    <div className="min-h-screen bg-blue-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// Protected route component
+function ProtectedRoute({ children, role: requiredRole }) {
+  const { isAuthenticated, loading, role } = useAuth();
+
+  if (loading) return <LoadingPage />;
+
+  if (!isAuthenticated) {
+    return <Navigate to={requiredRole === 'officer' ? '/security/login' : '/login'} replace />;
   }
 
-  function handleLogout() {
-    setLoggedIn(false);
-    setPage("login");
-    setLetter("");
-    setSent(false);
+  if (requiredRole && role !== requiredRole) {
+    return <MainLayout><p role="alert">This page is available only to safety officers.</p></MainLayout>;
   }
 
-  function handleSend() {
-    setSent(true);
-    setLetter("");
-    setPage("mailbox");
-  }
+  return <>{children}</>;
+}
 
-  if (!loggedIn) {
-    switch (page) {
-      case "register":
-        return <UserRegisterPage onSignIn={() => setPage("login")} />;
-      case "security-login":
-        return (
-          <SecurityLoginPage
-            onRegister={() => setPage("security-register")}
-            onUserSignIn={() => setPage("login")}
-          />
-        );
-      case "security-register":
-        return <SecurityRegisterPage onSignIn={() => setPage("security-login")} />;
-      default:
-        return (
-          <UserLoginPage
-            onLogin={handleLogin}
-            onRegister={() => setPage("register")}
-            onSecuritySignIn={() => setPage("security-login")}
-          />
-        );
-    }
-  }
+// Main app layout
+function MainLayout({ children }) {
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-blue-50">
       <header className="bg-white border-b px-6 py-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-700">Setu</h1>
-        <button onClick={handleLogout} className="text-gray-600 hover:text-red-500">
-          Logout
-        </button>
+        {user && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">{user.email}</span>
+          </div>
+        )}
       </header>
-
-      <main className="max-w-xl mx-auto p-6">
-        {page === "welcome" && (
-          <UserWelcomePage
-            onViewMailbox={() => setPage("mailbox")}
-            onWriteLetter={() => setPage("write")}
-          />
-        )}
-        {page === "mailbox" && (
-          <Mailbox sent={sent} onBack={() => setPage("welcome")} onWriteLetter={() => setPage("write")} />
-        )}
-        {page === "write" && (
-          <WriteLetterPage
-            letter={letter}
-            onLetterChange={setLetter}
-            onBack={() => setPage("mailbox")}
-            onSend={handleSend}
-          />
-        )}
+      <main className="max-w-2xl mx-auto p-6">
+        {children}
       </main>
     </div>
+  );
+}
+
+function AppContent() {
+  const { isAuthenticated, loading, role } = useAuth();
+
+  if (loading) return <LoadingPage />;
+
+  return (
+    <Routes>
+      {/* Auth Routes */}
+      <Route path="/login" element={<UserLoginPage />} />
+      <Route path="/register" element={<UserRegisterPage />} />
+      <Route path="/security/login" element={<SecurityLoginPage />} />
+      <Route path="/security/register" element={<SecurityRegisterPage />} />
+
+      {/* Protected Routes */}
+      <Route
+        path="/officer/queue"
+        element={
+          <ProtectedRoute role="officer">
+            <MainLayout>
+              <OfficerQueuePage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/welcome"
+        element={
+          <ProtectedRoute>
+            {role === 'officer' ? <Navigate to="/officer/queue" replace /> : (
+              <MainLayout>
+                <UserWelcomePage />
+              </MainLayout>
+            )}
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mailbox"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Mailbox />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/write"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <WriteLetterPage />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Root redirect */}
+      <Route path="/" element={<Navigate to={isAuthenticated ? '/welcome' : '/login'} replace />} />
+
+      {/* 404 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  const [firebaseReady, setFirebaseReady] = useState(false);
+
+  useEffect(() => {
+    initFirebase().then(() => setFirebaseReady(true));
+  }, []);
+
+  if (!firebaseReady) {
+    return <LoadingPage />;
+  }
+
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +9,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, setDoc, updateDoc, where } from "firebase/firestore";
 
 const rules = readFileSync(resolve(fileURLToPath(new URL("../firestore.rules", import.meta.url))), "utf8");
 let testEnv: RulesTestEnvironment;
@@ -43,6 +44,9 @@ beforeEach(async () => {
       }),
       setDoc(doc(db, "users/officer1"), {
         displayName: "Officer", role: "officer", status: "approved", pairId: null,
+      }),
+      setDoc(doc(db, "users/pending-officer"), {
+        displayName: "Pending officer", role: "officer", status: "pending", pairId: null,
       }),
       setDoc(doc(db, "users/pending-admin"), {
         displayName: "Pending", role: "admin", status: "pending", pairId: null,
@@ -115,6 +119,69 @@ test("letters are readable only by active pair members for approved or own lette
   await assertFails(getDoc(doc(otherDb, "letters/approved")));
   await assertFails(getDoc(doc(studentDb, "letters/paused-approved")));
   await assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(), "letters/approved")));
+});
+
+test("only approved officers can query letters awaiting review", async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "letters/awaiting-review"), {
+      pairId: "pair1", authorUid: "student1", recipientUid: "pal1",
+      status: "in_review", body: "A letter awaiting review", submittedAt: new Date(),
+    });
+  });
+  const queue = (uid: string) => query(collection(testEnv.authenticatedContext(uid).firestore(), "letters"),
+    where("status", "==", "in_review"), orderBy("submittedAt", "asc"), limit(50));
+  const officerDb = testEnv.authenticatedContext("officer1").firestore();
+  const results = await assertSucceeds(getDocs(queue("officer1")));
+  assert.deepEqual(results.docs.map((letter) => letter.id), ["awaiting-review"]);
+  await assertFails(getDocs(queue("student1")));
+  await assertFails(getDocs(queue("admin1")));
+  await assertFails(getDocs(queue("pending-officer")));
+  await assertFails(getDocs(collection(officerDb, "letters")));
+  await assertFails(getDoc(doc(officerDb, "letters/approved")));
+  await assertFails(getDoc(doc(officerDb, "letters/own-returned")));
+  await assertFails(updateDoc(doc(officerDb, "letters/awaiting-review"), { status: "approved" }));
+});
+
+test("mailbox queries only return approved incoming letters and the author's returned letters", async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const submittedAt = new Date();
+    await Promise.all([
+      setDoc(doc(db, "letters/incoming"), {
+        pairId: "pair1", authorUid: "pal1", recipientUid: "student1", status: "approved", submittedAt,
+      }),
+      setDoc(doc(db, "letters/incoming-returned"), {
+        pairId: "pair1", authorUid: "pal1", recipientUid: "student1", status: "returned", submittedAt,
+      }),
+      setDoc(doc(db, "letters/own-returned"), {
+        pairId: "pair1", authorUid: "student1", recipientUid: "pal1", status: "returned", submittedAt,
+      }),
+      setDoc(doc(db, "letters/incoming-review"), {
+        pairId: "pair1", authorUid: "pal1", recipientUid: "student1", status: "in_review", submittedAt,
+      }),
+    ]);
+  });
+  const studentDb = testEnv.authenticatedContext("student1").firestore();
+  const letters = collection(studentDb, "letters");
+  const incoming = query(letters, where("pairId", "==", "pair1"),
+    where("recipientUid", "==", "student1"), where("status", "==", "approved"),
+    orderBy("submittedAt", "desc"), limit(50));
+  const returned = query(letters, where("pairId", "==", "pair1"),
+    where("authorUid", "==", "student1"), where("status", "==", "returned"),
+    orderBy("submittedAt", "desc"), limit(50));
+  assert.deepEqual((await assertSucceeds(getDocs(incoming))).docs.map((letter) => letter.id), ["incoming"]);
+  assert.deepEqual((await assertSucceeds(getDocs(returned))).docs.map((letter) => letter.id), ["own-returned"]);
+  await assertFails(getDocs(query(letters, where("recipientUid", "==", "student1"),
+    where("status", "in", ["approved", "returned"]), orderBy("submittedAt", "desc"), limit(50))));
+  const otherLetters = collection(testEnv.authenticatedContext("other").firestore(), "letters");
+  await assertFails(getDocs(query(otherLetters, where("pairId", "==", "pair1"),
+    where("recipientUid", "==", "student1"), where("status", "==", "approved"),
+    orderBy("submittedAt", "desc"), limit(50))));
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "pairs/pair1"), { status: "paused" });
+  });
+  await assertFails(getDocs(incoming));
+  await assertFails(getDocs(returned));
 });
 
 test("pausing a pair immediately blocks both members from reading letters", async () => {
