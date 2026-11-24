@@ -1,4 +1,3 @@
-node_modules/
 functions/lib/
 dist/
 .emulator-data/
@@ -10,3 +9,11 @@ ui-debug.log
 .env.*
 service-account*.json
 .DS_Store
+**/node_modules/
+node_modules/
+**/dist/
+!.env.example
+.vite/
+.DS_Store
+*.log
+AGENTS.md
