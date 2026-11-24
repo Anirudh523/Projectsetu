@@ -1,5 +1,5 @@
 # Project Setu
-
+# Backend 
 ## Account model
 
 New Firebase Auth accounts receive a `users/{uid}` profile with `status: "pending"`, `role: null`, and no pair. Signup never grants a role. An admin approves a pending account with `adminApproveUser`; `adminSetRole` changes the role of an already approved account. Both operations update the profile and Auth custom claims.
@@ -39,3 +39,21 @@ npm run test:functions
 ```
 
 This builds the functions, starts only the local Auth, Firestore, and Functions emulators under the `demo-setu` project, runs callable integration tests, and then stops the emulators. The test script explicitly connects to `127.0.0.1`; it does not call a deployed Firebase project. Successful steps print `PASS` lines, and the test runner prints a final TAP summary. The tests cover pair creation and consent, letter submission/review/resubmission, reporting and pausing, admin unpause, and audit/read access. For interactive debugging, start the emulators with `npm run emulators` in one terminal and run `npm run test:functions -w scripts` in another.
+
+# Frontend
+# React + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the Oxlint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
