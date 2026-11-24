@@ -8,6 +8,8 @@ export default function UserLoginPage({ onLogin, onRegister, onSecuritySignIn })
   function handleLogin(e) {
     e.preventDefault();
 
+    // Replace the demo credential check with Firebase signInWithEmailAndPassword
+    // here, where the form owns its credentials and can show errors.
     if (email === "student@test.com" && password === "password123") {
       onLogin();
     } else {

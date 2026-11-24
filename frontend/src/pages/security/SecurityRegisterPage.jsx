@@ -5,6 +5,9 @@ export default function SecurityRegisterPage({ onSignIn }) {
 
   function handleRegister(e) {
     e.preventDefault();
+    // Start the backend-approved officer onboarding flow here so the form can
+    // report errors. Verification confirms email ownership. Officer access
+    // requires a trusted admin to grant the role.
     setSubmitted(true);
   }
 

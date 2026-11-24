@@ -7,17 +7,25 @@ import UserRegisterPage from "./pages/user/UserRegisterPage.jsx";
 import UserWelcomePage from "./pages/user/UserWelcomePage.jsx";
 import WriteLetterPage from "./pages/user/WriteLetterPage.jsx";
 
+// When Firebase is configured, import Auth, Firestore, and Functions from one
+// shared SDK module (e.g. ./firebase.js) so every screen uses the same project.
 function App() {
+  // Replace the demo session flag with an Auth listener here so every screen
+  // shares session state. Start in a loading state and unsubscribe on unmount.
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState("login");
   const [letter, setLetter] = useState("");
   const [sent, setSent] = useState(false);
 
+  // With Firebase, derive the next screen from the session and account access
+  // state below instead of opening Welcome as soon as the form succeeds.
   function handleLogin() {
     setLoggedIn(true);
     setPage("welcome");
   }
 
+  // Call Firebase signOut here so logout ends the session as well as clearing
+  // the draft and mailbox state owned by App.
   function handleLogout() {
     setLoggedIn(false);
     setPage("login");
@@ -25,12 +33,20 @@ function App() {
     setSent(false);
   }
 
+  // Call the protected submitLetter function here because App owns the draft
+  // and navigation. Use the authorized pair and confirmed callable contract.
+  // Clear the draft and open the mailbox only after success.
   function handleSend() {
     setSent(true);
     setLetter("");
     setPage("mailbox");
   }
 
+  // Keep account gates here so both sign-in pages lead through the same checks.
+  // While loading, wait. For unverified users, show a verification screen that
+  // can resend the email and reload the user and token after verification.
+  // Then use server-provided approval and role to show Pending Approval or the
+  // allowed area. Firestore rules and callable functions enforce access.
   if (!loggedIn) {
     switch (page) {
       case "register":

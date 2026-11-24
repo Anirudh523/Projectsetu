@@ -1,4 +1,7 @@
 export default function Mailbox({ sent, onBack, onWriteLetter }) {
+  // Load or subscribe to authorized letter data here once the approved account
+  // and pair are available. The mailbox owns loading, empty, and error states.
+  // Replace the demo status with the stored status and clean up any listener.
   return (
     <>
       <button onClick={onBack} className="text-blue-600 mt-6 mb-6">

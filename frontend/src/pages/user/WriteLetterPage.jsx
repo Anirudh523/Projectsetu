@@ -1,4 +1,6 @@
 export default function WriteLetterPage({ letter, onLetterChange, onBack, onSend }) {
+  // Keep the draft and submit handler in App. Render submission progress and
+  // errors here so the writer can retry without losing the draft.
   return (
     <>
       <button onClick={onBack} className="text-blue-600 mt-6 mb-6">

@@ -5,6 +5,8 @@ export default function UserRegisterPage({ onSignIn }) {
 
   function handleRegister(e) {
     e.preventDefault();
+    // Start account creation and request email verification here, where the
+    // form can report errors. If sending fails after creation, offer a resend.
     setSubmitted(true);
   }
 

@@ -6,6 +6,8 @@ export default function SecurityLoginPage({ onRegister, onUserSignIn }) {
   function handleLogin(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    // Replace the demo credential check with Firebase signInWithEmailAndPassword
+    // here for inline form feedback. App should use the trusted role to decide access.
     const matchesDemo = form.get("email") === "officer@test.com"
       && form.get("password") === "demo-officer";
     setResult(matchesDemo ? "success" : "error");
